@@ -73,6 +73,10 @@ func (t *Train) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (t *Train) printTrain() {
+	fmt.Printf("%+v\n", t)
+}
+
 type CustomTime time.Time
 
 func (c *CustomTime) UnmarshalJSON(b []byte) error {
@@ -86,21 +90,6 @@ func (c *CustomTime) UnmarshalJSON(b []byte) error {
 	}
 	*c = CustomTime(t)
 	return nil
-}
-
-func readDataFromJSON(path string) Trains {
-
-	d := make(Trains, 0)
-
-	jsonFile, err := os.Open(path)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	json.Unmarshal(byteValue, &d)
-	return d
 }
 
 type Query struct {
@@ -126,8 +115,38 @@ func (q *Query) readUserParamsFromTerminal() {
 	q.Criteria = q.Criteria[0 : len(q.Criteria)-1]
 }
 
-func (t *Train) printTrain() {
-	fmt.Printf("%+v\n", t)
+func main() {
+
+	//query data from user
+	query := new(Query)
+	query.readUserParamsFromTerminal()
+
+	//find trains by query params
+	result, err := FindTrains(query.DepartureStationID, query.ArrivalStationID, query.Criteria)
+
+	//handle error
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+
+	//print result
+	printFindingResult(result)
+}
+
+func readDataFromJSON(path string) Trains {
+
+	d := make(Trains, 0)
+
+	jsonFile, err := os.Open(path)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(byteValue, &d)
+	return d
 }
 
 func printFindingResult(t Trains) {
@@ -201,23 +220,4 @@ func FindTrains(departureStation, arrivalStation, criteria string) (Trains, erro
 		return trains, nil
 	}
 	return trains[:numOfReturnTrains], nil
-}
-
-func main() {
-
-	//query data from user
-	query := new(Query)
-	query.readUserParamsFromTerminal()
-
-	//find trains by query params
-	result, err := FindTrains(query.DepartureStationID, query.ArrivalStationID, query.Criteria)
-
-	//handle error
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	//print result
-	printFindingResult(result)
 }
